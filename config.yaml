@@ -1,0 +1,5 @@
+nodeConfig:
+  # name_of_node: path_to_node_config
+  node1: "modules/nodeConfig.yaml"
+  node2: "modules/nodeConfig.yaml"
+  node3: "modules/nodeConfig.yaml"

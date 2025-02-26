@@ -1,0 +1,15 @@
+node:
+  DevEUI: "Generic Sensor 1" # UID
+  SpreadingFactor: 7 # Data rate and range
+  FrequencyRange: [100, 1000] # Min and max frequency range in MHz
+  Distance: 100 # Distance from the gateway in meters
+  TransmissionPower: 14 # Signal strength in dBm
+  DutyCycleLimits: 1 # Duty cycle limits in percentage
+  Sensor:
+    type: "Temperature" # Sensor type
+    minValue: 0 # Min value which can be recorded by the sensor
+    maxValue: 100 # Max value which can be recorded by the sensor
+    unit: "C" # Unit of the sensor
+    frequency: 10 # Frequency of the sensor data in seconds
+    function: "sin" # Function to generate the sensor data
+    noise: 0.1 # Noise in the sensor data
