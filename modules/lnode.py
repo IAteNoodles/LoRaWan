@@ -3,6 +3,7 @@ import simpy  # Import the SimPy module
 import yaml  # For configuration file parsing
 import os  # For file path operations
 import math
+import channel
 
 # Load the main configuration from the YAML file
 with open('config.yaml', 'r') as file:
@@ -40,6 +41,7 @@ class LoraNode:
         if node_config:
             self.devEUI = node_config.get('DevEUI', random.randint(0, 2**64))
             self.spreadingFactor = node_config.get('SpreadingFactor', 7)
+            self.channelList = node_config.get('ChannelList', [868.1,868.3,868.5])
             self.minFrequency = node_config.get('FrequencyRange')[0]
             self.maxFrequency = node_config.get('FrequencyRange')[1]
             self.transmissionPower = node_config.get('TransmissionPower', 14)
@@ -54,6 +56,13 @@ class LoraNode:
                 'noise': 0.1
                 'bias': 0.5 # Error bias
             })
+        
+
+    def select_frequency(self):
+        # Select a frequency from the channel list
+        channelFrequency = random.choice(self.channelList)
+        self.channel = channel.Channel(self.env, self.channelFrequency)
+        return channelFrequency
         
     def generate_signal(self):
         # Generate the signal based of the function from sensorData
@@ -84,7 +93,8 @@ class LoraNode:
         return {
             'DevEUI': self.devEUI,
             'SpreadingFactor': self.spreadingFactor,
-            'Frequency': random.uniform(self.minFrequency, self.maxFrequency),
+            'Channel': self.select_frequency(),
+            'FrequencyRange': [self.minFrequency, self.maxFrequency],
             'TransmissionPower': self.transmissionPower,
             'Noise': self.sensorData['noise'],
             'Bias': self.sensorData['bias'],
@@ -92,6 +102,13 @@ class LoraNode:
             'Signal': signal
         }
 
-    def transmit_packet(self, packet):
-        # Placeholder for packet transmission
-        pass
+    def transmit_packet(self):
+        while True:
+            packet = self.assemble_packet()
+            
+            with self.channel.request_channel() as req:
+                yield req
+
+                yield self.channel.transmit(packet)
+
+            yield self.env.timeout(self.sensorData['frequency'])
