@@ -2,6 +2,7 @@ import random
 import simpy  # Import the SimPy module
 import yaml  # For configuration file parsing
 import os  # For file path operations
+import math
 
 # Load the main configuration from the YAML file
 with open('config.yaml', 'r') as file:
@@ -27,7 +28,7 @@ else:
 """
 # Define the node class
 class LoraNode:
-    def __init__(self, env, nodeName):
+    def __init__(self, env: simpy.Environment, nodeName):
         self.env = env
         self.nodeName = nodeName
 
@@ -51,5 +52,46 @@ class LoraNode:
                 'frequency': 60,
                 'function': "sin",
                 'noise': 0.1
+                'bias': 0.5 # Error bias
             })
         
+    def generate_signal(self):
+        # Generate the signal based of the function from sensorData
+        # types include, sin, random, etc.
+        # The output will squished to adjust the minValue and maxValue
+        minVal = self.sensorData['minValue']
+        maxVal = self.sensorData['maxValue']
+        if self.sensorData['function'] == 'sin':
+            value = (maxVal - minVal) * (1 + random.random() * math.sin(2 * math.pi * self.env.now / self.sensorData['frequency'])) / 2 + minVal
+        elif self.sensorData['function'] == 'random':
+            value = (maxVal - minVal) * random.random() + minVal
+        
+        # Placeholder for other functions
+
+        # Add bias to the value
+        value += self.sensorData['bias']
+
+        return value
+    
+    def add_noise(self, signal):
+        # Add noise to the signal
+        return signal + random.gauss(0, self.sensorData['noise'])
+
+    def assemble_packet(self):
+        # Assemble the packet with the signal
+        signal = self.generate_signal()
+        signal = self.add_noise(signal)
+        return {
+            'DevEUI': self.devEUI,
+            'SpreadingFactor': self.spreadingFactor,
+            'Frequency': random.uniform(self.minFrequency, self.maxFrequency),
+            'TransmissionPower': self.transmissionPower,
+            'Noise': self.sensorData['noise'],
+            'Bias': self.sensorData['bias'],
+            'Time': self.env.now,
+            'Signal': signal
+        }
+
+    def transmit_packet(self, packet):
+        # Placeholder for packet transmission
+        pass
